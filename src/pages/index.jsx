@@ -67,7 +67,7 @@ export default function Home() {
         if (i + start >= end) clearInterval(intervalId);
       }, 500); // 每500毫秒显示一条消息
     }
-  }, [currentContext,displayedChats.length]); // currentContext更新都会执行
+  }, [currentContext]); // currentContext更新都会执行
 
   // 3. 链接钱包后，更新loginFlag，然后触发aivinci展示登陆态的对话
   useEffect(() => {
