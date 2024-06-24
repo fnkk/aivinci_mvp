@@ -2,16 +2,30 @@ import React, { useState, useEffect, useRef } from 'react';
 import '../app/globals.css';  // 确保这个文件中引入了Tailwind CSS
 import { aivinciQuizTask, aivinciQuizTaskStatus, completeAivinciQuizeTask, pullContexts, completeTask, rejectTask, completeTaskWithInput } from '../api/aivinciApi';
 
+import MyDialog from '../components/ChatBox/MyDialog';
+import VinciDialog from "../components/ChatBox/VinciDialog"
 import { unLoginContext, rejectLoginContext } from '../data/contextData';
-
+import Image from 'next/image';
 export default function Home() {
-
+  const account = ''
   // **********************************
   // state介绍
   // **********************************
+  function extractInfo(input) {
+    // 使用正则表达式匹配文本和括号内的数字
+    const textMatch = input.match(/^[^(]+/); // 匹配括号前的文本
+    const numberMatch = input.match(/\d+/); // 匹配括号内的数字
 
+    // 提取并处理文本和数字
+    const text = textMatch ? textMatch[0].trim() : "";
+    const number = numberMatch ? parseInt(numberMatch[0], 10) : 0;
+
+    // 返回处理后的结果
+    return { text, number };
+  }
   // 1. 基础特性：登陆状态
   const [loginFlag, setLoginFlag] = useState(false);
+  const [lastVinciDialogIndex, setLastVinciDialogIndex] = useState(0);
 
   // 2. 基础特性：对话相关的状态
   const [allContexts, setAllContexts] = useState({});
@@ -69,6 +83,18 @@ export default function Home() {
     }
   }, [currentContext]); // currentContext更新都会执行
 
+  // 处理 获取最后一位 vinci说的话的  index
+  useEffect(() => {
+    const vinciDialogIndices = displayedChats.reduce((indices, chat, index) => {
+      if (chat.speaker === 'aivinci') {
+        indices.push(index);
+      }
+      return indices;
+    }, []);
+
+    // 最后一个 VinciDialog 的索引
+    setLastVinciDialogIndex(vinciDialogIndices[vinciDialogIndices.length - 1])
+  }, [displayedChats])
   // 3. 链接钱包后，更新loginFlag，然后触发aivinci展示登陆态的对话
   useEffect(() => {
 
@@ -109,92 +135,153 @@ export default function Home() {
   };
 
 
-  // 2. contextFunctions，是context的button的nextContext里可以配置的“功能函数”
-  // 这个函数会执行后，需要返回下一段对话
   const contextFunctions = {
 
     // 登陆函数
     // 1. 执行连接钱包
     // 2. 成功后，返回一组context
     login: () => {
-      console.log("exec login()")
-      setLoginFlag(true);
-      let ctx = {
-        root_context: [
-          {
-            "speaker": "aivinci",
-            "message": "Logged in successfully!"
-          }
-        ]
-      };
-      return ctx;
+        if (account) {
+            TalkContentQuery.mutate({ account })
+        }
     },
 
     // 拉取一段新对话
     pullContexts: async () => {
-      console.log("exec pullContexts()")
-      return await pullContexts();
+        // console.log("exec pullContexts()")
+        // return await pullContexts();
+        if (account) {
+            TalkContentQuery.mutate({ account })
+        }
     },
 
     // 完成任务
     // 会向后台调用完成任务接口，并返回下一段对话
     completeTask: async () => {
-      console.log("exec completeTask()")
-      return await completeTask();
+        console.log("exec completeTask()")
+        if (account) {
+            CompleteTaskQuery.mutate({ account, taskId, result: { input } })
+        }
+        // return await completeTask();
     },
 
     // 完成任务（含input的button才能配置这个函数）
     // 会向后台调用完成携带user input的任务接口，并返回下一段对话
-    completeTaskWithInput: async (userInput) => {
-      console.log("exec completeTaskWithInput()")
-      return await completeTaskWithInput(userInput);
+    completeTaskWithInput: async (match, matchFail) => {
+        if (account) {
+            if (!match) {
+                // taskId 默认值为 25 是分享阵营的任务，如果拉取到别的任务，会覆盖掉这个taskid
+                CompleteTaskQuery.mutate({ account, taskId, result: { URL: input } })
+            } else {
+                // 用match进行正则匹配
+                const regex = new RegExp(decodeURI(match));
+                if (regex.test(input)) {
+                    // 通过正则，调用complete
+                    CompleteTaskQuery.mutate({ account, taskId, result: { URL: input } })
+                } else {
+
+                    setCurrentContext([...allContexts[matchFail]]);
+                }
+            }
+
+            setInput('')
+        }
     },
 
     // 拒绝任务
     // 会向后台调用拒绝任务接口，并返回下一段对话
     rejectTask: async () => {
-      console.log("exec rejectTask()")
-      return await rejectTask();
+        console.log("exec rejectTask()")
+        if (account) {
+            RejectTaskQuery.mutate({ account, taskId })
+        }
+        // return await rejectTask();
     },
-
+    // 拒绝任务
+    // 会向后台调用拒绝任务接口，并返回下一段对话
+    rejectShareCampTask: async () => {
+        console.log("exec rejectTask()")
+        if (account) {
+            RejectShareCampTaskQuery.mutate({ account })
+        }
+        // return await rejectTask();
+    },
+    verifyTask: () => {
+        if (account) {
+            VerifyTaskQuery.mutate({ account, taskId })
+        }
+    },
     // counter++
     // 这是一个异步函数，它会去累加一个counter
     addCounter: async () => {
-      console.log("exec addCounter()")
+        console.log("exec addCounter()")
 
-      setCounter(counter + 1);
+        setCounter(prevCounter => {
+            const newCounter = prevCounter + 1
+            CampCount = newCounter
+            return newCounter
+        })
     },
 
     // counter--
     // 这是一个异步函数，它会去累减一个counter
     subCounter: async () => {
-      console.log("exec subCounter()")
+        console.log("exec subCounter()")
+        setCounter(prevCounter => {
+            const newCounter = prevCounter - 1;
+            CampCount = newCounter
+            return newCounter;
+        });
 
-      setCounter(counter - 1);
     },
 
     // counter << 0
     // 这是一个异步函数，它会把counter重置为0
     resetCounter: async () => {
-      console.log("exec resetCounter()")
+        console.log("exec resetCounter()")
 
-      setCounter(0);
+        setCounter(0);
     },
 
     // 完成阵营任务
     // 请求后台，把阵营任务设置为完成
-    completeAivinciQuizeTask: async () => {
-      console.log("exec aivinciQuizeTask()")
-      return await completeAivinciQuizeTask(counter);
+    completeAivinciQuizeTask: () => {
+        function getRandomNumber() {
+            return Math.random() * 2 - 1;
+        }
+        let randomCounter = getRandomNumber()
+        const camp = `${randomCounter > 0 ? 'aivinci' : 'michelangelo'}`
+        // const camp = `${CampCount > 0 ? 'aivinci' : 'michelangelo'}`
+        if (account) {
+            appendCampInfoQuery.mutate({ account, camp })
+        }
     }
-  };
+};
 
-  // 3. 按钮的处理接口
-  const handleButtonAction = async (button, index) => {
+// 3. 按钮的处理接口
 
+const handleButtonAction = async (button, index) => {
+    // 5. 如果按钮配置了postCtxFunc，会在nextContex处理后，异步执行一个指定contextFunctions，不需要更新执行结果
+    if (button.postCtxFunc) {
+        const func = contextFunctions[button.postCtxFunc];
+
+        if (func) {
+            await func();
+        } else {
+            console.error('Function not found:', button.postCtxFunc);
+        }
+    }
     // 1. 如果按钮配置了url，则会打开这个url
     if (button.url) {
-      window.open(button.url, '_blank');
+        const containsTwitter = (url) => {
+            return url.includes("https://twitter.com/intent/tweet?text=");
+        }
+        console.log(button.url, containsTwitter(button.url))
+        if (containsTwitter(button.url)) {
+            window.open(`${button.url}%26R%3D${state.user?.inviteCode}`);
+        } else {
+            window.open(button.url)
+        }
     }
 
     // 2. 按钮被点击后，就不再继续显示
@@ -207,19 +294,36 @@ export default function Home() {
 
     // 3.1 如果有输入框，先把输入框的内容打印出来
     if (button.input) {
-      userInput = inputRefs.current[index]?.value || '';
-      console.log("User input for button ", index, " is:", userInput);
-      const newMessage = { speaker: "user", message: userInput, buttonsDisplayed: false }; // 用户消息不包含按钮，所以buttonsDisplayed为false 
-      updatedChats.push(newMessage);
+        const functionName = button.nextContex?.split("@func@")[1];
+
+        if (functionName == 'completeTaskWithInput') {
+            if (input) {
+                const newMessage = { speaker: "user", message: input, buttonsDisplayed: false }; // 用户消息不包含按钮，所以buttonsDisplayed为false 
+                updatedChats.push(newMessage);
+                // 3.2 其次，把按钮配置的msg字段，打印出来
+                const newMessage2 = { speaker: "user", message: button.msg, buttonsDisplayed: false };
+                updatedChats.push(newMessage2);
+                setDisplayedChats(updatedChats);
+            }
+        } else {
+            var newMessage = { speaker: "user", message: input, buttonsDisplayed: false }; // 用户消息不包含按钮，所以buttonsDisplayed为false 
+            updatedChats.push(newMessage);
+            // 3.2 其次，把按钮配置的msg字段，打印出来
+            var newMessage2 = { speaker: "user", message: button.msg, buttonsDisplayed: false };
+            updatedChats.push(newMessage2);
+            setDisplayedChats(updatedChats);
+        }
+
+    } else {
+        // 3.2 其次，把按钮配置的msg字段，打印出来
+        var newMessage2 = { speaker: "user", message: button.msg, buttonsDisplayed: false };
+        if (newMessage2.message) {
+            updatedChats.push(newMessage2);
+            setDisplayedChats(updatedChats);
+        }
     }
 
-    // 3.2 其次，把按钮配置的msg字段，打印出来
-    const newMessage = { speaker: "user", message: button.msg, buttonsDisplayed: false };
-    updatedChats.push(newMessage);
-    setDisplayedChats(updatedChats);
 
-    console.log("button.nextContex ", button.nextContex)
-    console.log("button.nextContex obj ", allContexts[button.nextContex])
 
     // 4. 处理下nextContex字段
     // nextContex有几种配置方式
@@ -229,51 +333,46 @@ export default function Home() {
 
     // 4.1 处理：配置@post@，会去post指定url，获取下一段对话
     if (button.nextContex && button.nextContex.startsWith("@post@")) {
-      const url = button.nextContex.split("@post@")[1];
-      try {
-        const response = await fetch(url, { method: 'POST' });
-        const data = await response.json();
-        console.log(data)
+        const url = button.nextContex.split("@post@")[1];
+        try {
+            const response = await fetch(url, { method: 'POST' });
+            const data = await response.json();
+            console.log(data)
 
-        setAllContexts(data)
-        setCurrentContext(data.root_context);
-      } catch (error) {
-        console.error('Failed to fetch next context:', error);
-        alert('Failed to load the next part of the conversation.');
-      }
+            setAllContexts(data)
+            setCurrentContext(data.root_context);
+        } catch (error) {
+            console.error('Failed to fetch next context:', error);
+            alert('Failed to load the next part of the conversation.');
+        }
     }
     // 4.2 处理：配置@func@，会去执行指定contextFunctions，获取下一段对话
     else if (button.nextContex && button.nextContex.startsWith("@func@")) {
-      const functionName = button.nextContex.split("@func@")[1];
-      const func = contextFunctions[functionName];
+        const functionName = button.nextContex.split("@func@")[1];
+        const func = contextFunctions[functionName];
 
-      if (func) {
-        const data = await func(userInput);
-        console.log("data of func,", data)
-        setAllContexts(data)
-        setCurrentContext(data.root_context);
-      } else {
-        console.error('Function not found:', functionName);
-      }
+        if (func) {
+            if (functionName == 'completeTaskWithInput') {
+                if (input) {
+                    await func(button.match, button.matchFail);
+                }
+            } else {
+                await func(button.match, button.matchFail);
+            }
+            // setAllContexts(data)
+            // setCurrentContext(data.root_context);
+        } else {
+            console.error('Function not found:', functionName);
+        }
     }
 
     // 4.3 处理：直接配置，就会指向下一段对话（在allContexts里面）
     else if (button.nextContex && allContexts[button.nextContex]) {
-      console.log("button.nextContex refresh")
-      setCurrentContext(allContexts[button.nextContex]);
+        console.log("button.nextContex refresh")
+        setCurrentContext(allContexts[button.nextContex]);
     }
 
-    // 5. 如果按钮配置了postCtxFunc，会在nextContex处理后，异步执行一个指定contextFunctions，不需要更新执行结果
-    if (button.postCtxFunc) {
-      const func = contextFunctions[button.postCtxFunc];
-
-      if (func) {
-        await func();
-      } else {
-        console.error('Function not found:', button.postCtxFunc);
-      }
-    }
-  };
+};
 
   // 4. 其他测试函数：处理json输入框的事件函数
   const handleProcessData = () => {
@@ -310,30 +409,71 @@ export default function Home() {
         {/* 聊天显示区 */}
         <div className="w-1/2 h-screen p-2 overflow-y-auto">
           {displayedChats.map((chat, index) => (
-            <div key={index} className={`p-3 my-2 rounded ${chat.speaker === 'aivinci' ? 'bg-green-200' : 'bg-white border'} shadow`}
-              style={{ alignSelf: chat.speaker === 'aivinci' ? 'flex-start' : 'flex-end' }}>
-              {chat.message}
-              {chat.btn && chat.buttonsDisplayed !== false && chat.speaker === 'aivinci' && (
-                <div className="flex justify-start space-x-2 mt-2">
-                  {chat.btn.map((button, btnIndex) => (
-                    <div key={btnIndex}>
-                      {button.input && (
-                        <input
-                          type="text"
-                          placeholder={button.input}
-                          ref={el => inputRefs.current[index] = el} // 创建引用
-                          className="flex-1 p-1 border border-gray-300 rounded"
-                        />
-                      )}
-                      <button key={btnIndex} onClick={() => handleButtonAction(button, index)}
-                        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-2 rounded">
-                        {button.txt}
-                      </button>
-                    </div>
-                  ))}
+            <React.Fragment key={index}>
+              {chat.speaker == "aivinci" ?
+                <div className="flex px-6 items-start">
+                  {/* {
+                    index == lastVinciDialogIndex &&
+                    <Image draggable={false} src={Avatar} alt="avatar" width={50} height={50} />
+                  } */}
+                  <VinciDialog title={chat?.title}>
+                    {chat.message}
+                    {/* {chat.reward > 0 && <div className='flex justify-start gap-2 items-center text-xl font-bold my-2'>
+                      <Image alt='' src={RewardSvg} />
+                      +{chat.reward}
+                    </div>} */}
+                    {chat.img && <Image alt='' src={chat.img} width={285} height={210} className='my-3 rounded-xl' />}
+                    {chat.btn && chat.buttonsDisplayed !== false && chat.speaker === 'aivinci' && (
+                      <div className="flex justify-start flex-wrap gap-2 mt-2">
+                        {chat.btn.map((button, btnIndex) => (
+                          <div key={`${button.type}-${btnIndex}`} className={`${button.type == 'input' ? 'w-full' : ''}`}>
+                            {button.type == 'connect' ? <AiConnectButton handler={() => handleButtonAction(button, index)} /> :
+                              button.type == 'input' ?
+                                <InputComponent value={input} onChange={setInput} placeholder={button.input} handler={() => handleButtonAction(button, index)} />
+                                :
+                                <button onClick={() => handleButtonAction(button, index)}
+                                  className={`${button?.style ? "bg-[#EAEAEA] hover:bg-[#C6C6C6] text-black" : "bg-[#ED4E01] hover:bg-[#BD3F03] text-white"} 
+                                                            rounded-[38px] sm:text-sm sm:font-medium min-w-20 sm:px-8 relative
+                                                       flex justify-start items-center text-start px-6 py-3 text-xs min-h-10 gap-1`}
+                                >
+                                  {extractInfo(button.txt).number > 0 &&
+                                    <div className='flex justify-start gap-1 items-center'>
+                                      {/* <Image alt='' src={RewardSvg} width={20} height={20} className='left-[6px] sm:left-3 absolute' /> */}
+                                    </div>
+                                  }
+                                  {extractInfo(button.txt).text}
+                                </button>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </VinciDialog>
                 </div>
-              )}
-            </div>
+                :
+                <MyDialog >
+                  {chat.message}
+                  {chat.img && <Image alt='' src={chat.img} width={285} height={210} className='my-3 rounded-xl' />}
+                  {chat.btn && chat.buttonsDisplayed !== false && chat.speaker === 'aivinci' && (
+                    <div className="flex justify-start flex-wrap gap-2 mt-2">
+                      {chat.btn.map((button, btnIndex) => (
+                        <div key={`${button.type}-${btnIndex}`} className={`${button.type == 'input' ? 'w-full' : ''}`}>
+                          {button.type == 'connect' ? <AiConnectButton handler={() => handleButtonAction(button, index)} /> :
+                            button.type == 'input' ?
+                              <InputComponent value={input} onChange={setInput} placeholder={button.input} handler={() => handleButtonAction(button, index)} />
+                              :
+                              <button onClick={() => handleButtonAction(button, index)}
+                                className={`${button?.style == 'gray' ? "bg-[#EAEAEA] hover:bg-[#C6C6C6] text-black" : "bg-[#ED4E01] hover:bg-[#BD3F03] text-white"} rounded-[38px] sm:text-sm sm:font-medium min-w-20 sm:px-8 
+                                                       flex justify-start items-center text-start px-6 py-3 text-xs min-h-10`}
+                              >
+                                {button.txt}{button.style}
+                              </button>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </MyDialog>
+              }
+            </React.Fragment>
           ))}
         </div>
       </div>
