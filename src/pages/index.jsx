@@ -67,7 +67,7 @@ export default function Home() {
         if (i + start >= end) clearInterval(intervalId);
       }, 500); // 每500毫秒显示一条消息
     }
-  }, [currentContext]); // currentContext更新都会执行
+  }, [currentContext,displayedChats.length]); // currentContext更新都会执行
 
   // 3. 链接钱包后，更新loginFlag，然后触发aivinci展示登陆态的对话
   useEffect(() => {
@@ -145,7 +145,7 @@ export default function Home() {
 
     // 完成任务（含input的button才能配置这个函数）
     // 会向后台调用完成携带user input的任务接口，并返回下一段对话
-    completeTaskWithInput: async (userInput: string) => {
+    completeTaskWithInput: async (userInput) => {
       console.log("exec completeTaskWithInput()")
       return await completeTaskWithInput(userInput);
     },
@@ -316,7 +316,7 @@ export default function Home() {
               {chat.btn && chat.buttonsDisplayed !== false && chat.speaker === 'aivinci' && (
                 <div className="flex justify-start space-x-2 mt-2">
                   {chat.btn.map((button, btnIndex) => (
-                    <div>
+                    <div key={btnIndex}>
                       {button.input && (
                         <input
                           type="text"
