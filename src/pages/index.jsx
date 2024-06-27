@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import '../app/globals.css';  // 确保这个文件中引入了Tailwind CSS
 import { aivinciQuizTask, aivinciQuizTaskStatus, completeAivinciQuizeTask, pullContexts, completeTask, rejectTask, completeTaskWithInput } from '../api/aivinciApi';
-
+import InputComponent from '../components/ChatBox/TaskInput';
+import RewardSvg from "../../public/asset/vision/Vinci/Reward.svg"
 import MyDialog from '../components/ChatBox/MyDialog';
 import VinciDialog from "../components/ChatBox/VinciDialog"
 import { unLoginContext, rejectLoginContext } from '../data/contextData';
@@ -407,7 +408,7 @@ const handleButtonAction = async (button, index) => {
           </button>
         </div>
         {/* 聊天显示区 */}
-        <div className="w-1/2 h-screen p-2 overflow-y-auto">
+        <div className="w-1/2 h-screen p-2 overflow-y-auto ">
           {displayedChats.map((chat, index) => (
             <React.Fragment key={index}>
               {chat.speaker == "aivinci" ?
@@ -429,7 +430,7 @@ const handleButtonAction = async (button, index) => {
                           <div key={`${button.type}-${btnIndex}`} className={`${button.type == 'input' ? 'w-full' : ''}`}>
                             {button.type == 'connect' ? <AiConnectButton handler={() => handleButtonAction(button, index)} /> :
                               button.type == 'input' ?
-                                <InputComponent value={input} onChange={setInput} placeholder={button.input} handler={() => handleButtonAction(button, index)} />
+                                <InputComponent value={''} onChange={setInput} placeholder={button.input} handler={() => handleButtonAction(button, index)} />
                                 :
                                 <button onClick={() => handleButtonAction(button, index)}
                                   className={`${button?.style ? "bg-[#EAEAEA] hover:bg-[#C6C6C6] text-black" : "bg-[#ED4E01] hover:bg-[#BD3F03] text-white"} 
@@ -438,7 +439,7 @@ const handleButtonAction = async (button, index) => {
                                 >
                                   {extractInfo(button.txt).number > 0 &&
                                     <div className='flex justify-start gap-1 items-center'>
-                                      {/* <Image alt='' src={RewardSvg} width={20} height={20} className='left-[6px] sm:left-3 absolute' /> */}
+                                      <Image alt='' src={RewardSvg} width={20} height={20} className='left-[6px] sm:left-3 absolute' />
                                     </div>
                                   }
                                   {extractInfo(button.txt).text}

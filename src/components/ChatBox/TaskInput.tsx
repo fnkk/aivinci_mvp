@@ -8,6 +8,7 @@ interface InputComponentProps {
 }
 
 const InputComponent: React.FC<InputComponentProps> = ({ value, onChange, placeholder, handler }) => {
+    console.log('0000',value)
     return (
         <div className='w-full flex h-[38px] justify-between items-center rounded-[25px] pl-4 pr-2 py-4 bg-[#EAEAEA]'>
             <input
