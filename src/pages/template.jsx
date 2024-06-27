@@ -76,52 +76,74 @@ function JsonGridPage() {
     },
     {
       name: "Daily non task chat 2", value: {
-        root_context: [
-          {
-            "speaker": "aivinci",
-            "message": "Hey bro!",
-          },
-          {
-            "speaker": "aivinci",
-            "message": "Ever wonder why Artela's event is called \"Renaissance\"?",
-          },
-          {
-            "speaker": "aivinci",
-            "message": "It's because crypto is getting a little stale these days! Artela's dreaming of an ideal realm!",
-            "btn": [
-              {
-                "txt": "Respect!",
-                "msg": "Respect! I'm all in with you guys!",
-                "nextContex": "context_101_respect"
-              },
-              {
-                "txt": "Catch ya later!",
-                "msg": "Catch ya later, I'm tied up with some stuff!",
-                "nextContex": "context_101_end"
-              }
-            ]
-          }
+        "root_context": [
+            {
+                "speaker": "aivinci",
+                "message": "Something about Enlightenment! 5 Crystals!",
+                "btn": [
+                    {
+                        "txt": "What's that?(909)",
+                        "msg": "What's that?",
+                        "nextContex": "context_quiz"
+                    },
+                    {
+                        "txt": "Not interested",
+                        "msg": "No thanks!",
+                        "style": "gray",
+                        "nextContex": "@func@rejectTask"
+                    }
+                ]
+            }
         ],
-        context_101_respect: [
-          {
-            "speaker": "aivinci",
-            "message": "Thanks for the pep talk!",
-            "btn": [
-              {
-                "txt": "Keep chatting!!",
-                "msg": "Let's keep the chat rolling!",
-                "nextContex": "@func@pullContexts"
-              }
-            ]
-          }
+        "context_quiz": [
+            {
+                "speaker": "aivinci",
+                "message": "The Enlightenment stage is set to begin in July. What updates are you most excited about?"
+            },
+            {
+                "speaker": "aivinci",
+                "message": "I’m particularly looking forward to the Renaissance NFT! "
+            },
+            {
+                "speaker": "aivinci",
+                "message": "Remember the NFT that Mr. Hamburger was designing before? What kind of character do you think it will be?",
+                "btn": [
+                    {
+                        "txt": "A. Monkey",
+                        "msg": "Maybe monkey?",
+                        "nextContex": "context_right"
+                    },
+                    {
+                        "txt": "B. Capybara",
+                        "msg": "Maybe capybara?",
+                        "nextContex": "context_right"
+                    },
+                    {
+                        "txt": "C. Dog",
+                        "msg": "It must be dog!",
+                        "nextContex": "context_right"
+                    }
+                ]
+            }
         ],
-        context_101_end: [
-          {
-            "speaker": "aivinci",
-            "message": "You go ahead and get busy, we can chat anytime!"
-          }
+        "context_right": [
+            {
+                "speaker": "aivinci",
+                "message": "Haha, I don't know either. Let's look forward to the upcoming release and event details!"
+            },
+            {
+                "speaker": "aivinci",
+                "message": "Click to claim your crystals!!!",
+                "btn": [
+                    {
+                        "txt": "Claim!!(909)",
+                        "msg": "Thanks!!!",
+                        "nextContex": "@func@completeTask"
+                    }
+                ]
+            }
         ]
-      }
+    }
     },
   ];
 
