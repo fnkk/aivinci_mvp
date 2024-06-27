@@ -428,7 +428,7 @@ const handleButtonAction = async (button, index) => {
                       <div className="flex justify-start flex-wrap gap-2 mt-2">
                         {chat.btn.map((button, btnIndex) => (
                           <div key={`${button.type}-${btnIndex}`} className={`${button.type == 'input' ? 'w-full' : ''}`}>
-                            {button.type == 'connect' ? <AiConnectButton handler={() => handleButtonAction(button, index)} /> :
+                            {button.type == 'connect' ? <button /> :
                               button.type == 'input' ?
                                 <InputComponent value={''} onChange={setInput} placeholder={button.input} handler={() => handleButtonAction(button, index)} />
                                 :
@@ -458,7 +458,7 @@ const handleButtonAction = async (button, index) => {
                     <div className="flex justify-start flex-wrap gap-2 mt-2">
                       {chat.btn.map((button, btnIndex) => (
                         <div key={`${button.type}-${btnIndex}`} className={`${button.type == 'input' ? 'w-full' : ''}`}>
-                          {button.type == 'connect' ? <AiConnectButton handler={() => handleButtonAction(button, index)} /> :
+                          {button.type == 'connect' ? '' :
                             button.type == 'input' ?
                               <InputComponent value={input} onChange={setInput} placeholder={button.input} handler={() => handleButtonAction(button, index)} />
                               :
