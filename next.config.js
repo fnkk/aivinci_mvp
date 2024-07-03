@@ -20,6 +20,13 @@ module.exports = {
         port: '',
         pathname: '/**',
       },
+      {
+        // https://artela-oss.oss-us-west-1.aliyuncs.com/renaissence/images/swapintro.png
+        protocol: 'https',
+        hostname: 'file.notion.so',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 }
